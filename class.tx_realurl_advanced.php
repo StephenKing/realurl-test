@@ -272,6 +272,7 @@ class tx_realurl_advanced {
 
 			if (is_array($cachedPagePath)) {
 				$result = $cachedPagePath['pagepath'];
+			} else {
 			}
 		}
 		return $result;
@@ -346,13 +347,18 @@ class tx_realurl_advanced {
 		$cacheKey = sha1('tx_realurl_idtopagepathcache' . '.' . $id . '.' . $mpvar . '.' . $lang);
 
 		$pagePathRec = $cache->get($cacheKey);
-		if ($pagePathRec === FALSE) {
+		if (empty($pagePathRec)) {
 			$pagePathRec = $this->IDtoPagePathThroughOverride($id, $mpvar, $lang);
 			if (!$pagePathRec) {
 				// Build the new page path, in the correct language
 				$pagePathRec = $this->IDtoPagePathSegments($id, $mpvar, $lang);
 			}
-			$cache->set($cacheKey, $pagePathRec);
+			try {
+				$cache->set($cacheKey, $pagePathRec);
+			} catch (t3lib_cache_Exception $e) {
+				throw new RuntimeException("Was not able to store pagePathRec " . $cacheKey . "=" . json_encode($pagePathRec))
+			}
+		} else {
 		}
 
 		return $pagePathRec;
@@ -440,11 +446,15 @@ class tx_realurl_advanced {
 		$cache = $GLOBALS['typo3CacheManager']->getCache('cache_hash');
 
 		if (FALSE === $cache->has($hash)) {
-			$cache->set(
-				$hash,
-				$data,
-				array(sha1('tx_realurl_pathcache-' . $rootPageId . '-' . $currentPagePath))
-			);
+			try {
+				$cache->set(
+					$hash,
+					$data,
+					array(sha1('tx_realurl_pathcache-' . $rootPageId . '-' . $currentPagePath))
+				);
+			} catch (t3lib_cache_Exception $e) {
+				throw new RuntimeException("Was not able to store pathcache entry " . json_encode($data));
+			}
 		}
 	}
 
