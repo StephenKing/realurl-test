@@ -272,9 +272,7 @@ class tx_realurl_advanced {
 
 			if (is_array($cachedPagePath)) {
 				$result = $cachedPagePath['pagepath'];
-				t3lib_div::debug('Got "' . $result . '" as pagepath from cache - line ' . __LINE__);
 			} else {
-				t3lib_div::debug('Cache miss for pageid:' . $pageid . ' - line ' . __LINE__);
 			}
 		}
 		return $result;
@@ -354,11 +352,9 @@ class tx_realurl_advanced {
 			if (!$pagePathRec) {
 				// Build the new page path, in the correct language
 				$pagePathRec = $this->IDtoPagePathSegments($id, $mpvar, $lang);
-				t3lib_div::debug('Saved pagePathRec "' . json_encode($pagePathRec) . '" to cache - line ' . __LINE__);
 			}
 			$cache->set($cacheKey, $pagePathRec);
 		} else {
-			t3lib_div::debug('Got pagePathRec "' . json_encode($pagePathRec) . '" from cache - line ' . __LINE__);
 		}
 
 		return $pagePathRec;
