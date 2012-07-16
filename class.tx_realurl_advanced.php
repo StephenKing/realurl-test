@@ -672,7 +672,7 @@ class tx_realurl_advanced {
 
 				if (count($cacheEntries)) {
 					// there should be one only..
-					list($cacheEntry) = $cacheEntries;
+					list($row) = $cacheEntries;
 					break;
 				}
 
