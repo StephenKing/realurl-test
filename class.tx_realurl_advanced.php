@@ -349,7 +349,7 @@ class tx_realurl_advanced {
 		$cacheKey = sha1('tx_realurl_idtopagepathcache' . '.' . $id . '.' . $mpvar . '.' . $lang);
 
 		$pagePathRec = $cache->get($cacheKey);
-		if (!empty($pagePathRec)) {
+		if (empty($pagePathRec)) {
 			$pagePathRec = $this->IDtoPagePathThroughOverride($id, $mpvar, $lang);
 			if (!$pagePathRec) {
 				// Build the new page path, in the correct language
