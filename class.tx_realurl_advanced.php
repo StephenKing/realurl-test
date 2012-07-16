@@ -256,19 +256,20 @@ class tx_realurl_advanced {
 	}
 
 	/**
-	 * Retireves page path from cache.
+	 * Retrieves page path from cache.
 	 *
+	 * @param $pageid int Page id
+	 * @param $lang int Language id
+	 * @param $mpvar string Mount point
 	 * @return mixed Page path (string) or false if not found
 	 */
-	private function getPagePathFromCache($pageid, $lang, $mpvar) {
-		$result = false;
+	protected function getPagePathFromCache($pageid, $lang, $mpvar) {
+		$result = FALSE;
 		if (!$this->conf['disablePathCache']) {
-			list($cachedPagePath) = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows('pagepath', 'tx_realurl_pathcache',
-				'page_id=' . intval($pageid) .
-				' AND language_id=' . intval($lang) .
-				' AND rootpage_id=' . intval($this->conf['rootpage_id']) .
-				' AND mpvar=' . $GLOBALS['TYPO3_DB']->fullQuoteStr($mpvar, 'tx_realurl_pathcache') .
-				' AND expire=0', '', '', 1);
+ 			$hash = sha1($pageid . '-' . $lang . '-' . $mpvar . '-' . $this->conf['rootpage_id']);
+
+			$cachedPagePath = $GLOBALS['typo3CacheManager']->getCache('cache_hash')->get($hash);
+
 			if (is_array($cachedPagePath)) {
 				$result = $cachedPagePath['pagepath'];
 			}
@@ -338,19 +339,20 @@ class tx_realurl_advanced {
 	 * @return mixed array(pagepath,langID,rootpage_id) if successful, false otherwise
 	 */
 	protected function getPagePathRec($id, $mpvar, $lang) {
-		static $IDtoPagePathCache = array();
 
-		$cacheKey = $id . '.' . $mpvar . '.' . $lang;
-		if (isset($IDtoPagePathCache[$cacheKey])) {
-			$pagePathRec = $IDtoPagePathCache[$cacheKey];
-		}
-		else {
+		/** @var $cache t3lib_cache_frontend_AbstractFrontend */
+		$cache = $GLOBALS['typo3CacheManager']->getCache('cache_hash');
+
+		$cacheKey = sha1('tx_realurl_idtopagepathcache' . '.' . $id . '.' . $mpvar . '.' . $lang);
+
+		$pagePathRec = $cache->get($cacheKey);
+		if ($pagePathRec === FALSE) {
 			$pagePathRec = $this->IDtoPagePathThroughOverride($id, $mpvar, $lang);
 			if (!$pagePathRec) {
 				// Build the new page path, in the correct language
 				$pagePathRec = $this->IDtoPagePathSegments($id, $mpvar, $lang);
 			}
-			$IDtoPagePathCache[$cacheKey] = $pagePathRec;
+			$cache->set($cacheKey, $pagePathRec);
 		}
 
 		return $pagePathRec;
@@ -582,13 +584,9 @@ class tx_realurl_advanced {
 			$cachedPagePath = false;
 			if (!$page['tx_realurl_exclude'] && !$stopUsingCache && !$this->conf['disablePathCache']) {
 
-				// Using pathq2 index!
-				list($cachedPagePath) = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows('pagepath', 'tx_realurl_pathcache',
-								'page_id=' . intval($page['uid']) .
-								' AND language_id=' . intval($lang) .
-								' AND rootpage_id=' . intval($this->conf['rootpage_id']) .
-								' AND mpvar=' . $GLOBALS['TYPO3_DB']->fullQuoteStr($page['_MP_PARAM'], 'tx_realurl_pathcache') .
-								' AND expire=0', '', '', 1);
+				$hash = sha1($page['uid'] . '-' . $lang . '-' . $this->conf['rootpage_id']  . '-' . $page['_MP_PARAM']);
+
+				$cachedPagePath = $GLOBALS['typo3CacheManager']->getCache('cache_hash')->get($hash);
 
 				if (is_array($cachedPagePath)) {
 					$lastPath = implode('/', $paths);
