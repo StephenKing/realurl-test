@@ -338,19 +338,20 @@ class tx_realurl_advanced {
 	 * @return mixed array(pagepath,langID,rootpage_id) if successful, false otherwise
 	 */
 	protected function getPagePathRec($id, $mpvar, $lang) {
-		static $IDtoPagePathCache = array();
 
-		$cacheKey = $id . '.' . $mpvar . '.' . $lang;
-		if (isset($IDtoPagePathCache[$cacheKey])) {
-			$pagePathRec = $IDtoPagePathCache[$cacheKey];
-		}
-		else {
+		/** @var $cache t3lib_cache_frontend_AbstractFrontend */
+		$cache = $GLOBALS['typo3CacheManager']->getCache('cache_hash');
+
+		$cacheKey = sha1('tx_realurl_idtopagepathcache' . '.' . $id . '.' . $mpvar . '.' . $lang);
+
+		$pagePathRec = $cache->get($cacheKey);
+		if ($pagePathRec === FALSE) {
 			$pagePathRec = $this->IDtoPagePathThroughOverride($id, $mpvar, $lang);
 			if (!$pagePathRec) {
 				// Build the new page path, in the correct language
 				$pagePathRec = $this->IDtoPagePathSegments($id, $mpvar, $lang);
 			}
-			$IDtoPagePathCache[$cacheKey] = $pagePathRec;
+			$cache->set($cacheKey, $pagePathRec);
 		}
 
 		return $pagePathRec;
