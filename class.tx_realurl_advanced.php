@@ -349,14 +349,14 @@ class tx_realurl_advanced {
 		$cacheKey = sha1('tx_realurl_idtopagepathcache' . '.' . $id . '.' . $mpvar . '.' . $lang);
 
 		$pagePathRec = $cache->get($cacheKey);
-		if ($pagePathRec === FALSE) {
+		if (!empty($pagePathRec)) {
 			$pagePathRec = $this->IDtoPagePathThroughOverride($id, $mpvar, $lang);
 			if (!$pagePathRec) {
 				// Build the new page path, in the correct language
 				$pagePathRec = $this->IDtoPagePathSegments($id, $mpvar, $lang);
-				$cache->set($cacheKey, $pagePathRec);
 				t3lib_div::debug('Saved pagePathRec "' . json_encode($pagePathRec) . '" to cache - line ' . __LINE__);
 			}
+			$cache->set($cacheKey, $pagePathRec);
 		} else {
 			t3lib_div::debug('Got pagePathRec "' . json_encode($pagePathRec) . '" from cache - line ' . __LINE__);
 		}
