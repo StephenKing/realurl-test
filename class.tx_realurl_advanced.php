@@ -338,19 +338,20 @@ class tx_realurl_advanced {
 	 * @return mixed array(pagepath,langID,rootpage_id) if successful, false otherwise
 	 */
 	protected function getPagePathRec($id, $mpvar, $lang) {
-		static $IDtoPagePathCache = array();
 
-		$cacheKey = $id . '.' . $mpvar . '.' . $lang;
-		if (isset($IDtoPagePathCache[$cacheKey])) {
-			$pagePathRec = $IDtoPagePathCache[$cacheKey];
-		}
-		else {
+		/** @var $cache t3lib_cache_frontend_AbstractFrontend */
+		$cache = $GLOBALS['typo3CacheManager']->getCache('cache_hash');
+
+		$cacheKey = sha1('tx_realurl_idtopagepathcache' . '.' . $id . '.' . $mpvar . '.' . $lang);
+
+		$pagePathRec = $cache->get($cacheKey);
+		if ($pagePathRec === FALSE) {
 			$pagePathRec = $this->IDtoPagePathThroughOverride($id, $mpvar, $lang);
 			if (!$pagePathRec) {
 				// Build the new page path, in the correct language
 				$pagePathRec = $this->IDtoPagePathSegments($id, $mpvar, $lang);
 			}
-			$IDtoPagePathCache[$cacheKey] = $pagePathRec;
+			$cache->set($cacheKey, $pagePathRec);
 		}
 
 		return $pagePathRec;
@@ -423,20 +424,26 @@ class tx_realurl_advanced {
 	 * @return void
 	 */
 	protected function addNewPagePathEntry($currentPagePath, $pathCacheCondition, $pageId, $mpvar, $langId, $rootPageId) {
-		$condition = $pathCacheCondition . ' AND pagepath=' .
-			$GLOBALS['TYPO3_DB']->fullQuoteStr($currentPagePath, 'tx_realurl_pathcache');
-		list($count) = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows('COUNT(*) AS t',
-			'tx_realurl_pathcache', $condition);
-		if ($count['t'] == 0) {
-			$insertArray = array(
-				'page_id' => $pageId,
-				'language_id' => $langId,
-				'pagepath' => $currentPagePath,
-				'expire' => 0,
-				'rootpage_id' => $rootPageId,
-				'mpvar' => $mpvar
+		$data = array(
+			'page_id' => $pageId,
+			'language_id' => $langId,
+			'pagepath' => $currentPagePath,
+			'expire' => 0,
+			'rootpage_id' => $rootPageId,
+			'mpvar' => $mpvar
+		);
+
+		$hash = sha1($pageId . '-' . $langId . '-' . $mpvar . '-' . $rootPageId);
+
+		/** @var $cache t3lib_cache_frontend_AbstractFrontend */
+		$cache = $GLOBALS['typo3CacheManager']->getCache('cache_hash');
+
+		if (FALSE === $cache->has($hash)) {
+			$cache->set(
+				$hash,
+				$data,
+				array(sha1('tx_realurl_pathcache-' . $rootPageId . '-' . $currentPagePath))
 			);
-			$GLOBALS['TYPO3_DB']->exec_INSERTquery('tx_realurl_pathcache', $insertArray);
 		}
 	}
 
@@ -659,15 +666,16 @@ class tx_realurl_advanced {
 			}
 			while (count($copy_pathParts)) {
 				// Using pathq1 index!
-				list($row) = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows(
-						'tx_realurl_pathcache.*', 'tx_realurl_pathcache,pages',
-						'tx_realurl_pathcache.page_id=pages.uid AND pages.deleted=0' .
-						' AND rootpage_id=' . intval($this->conf['rootpage_id']) .
-						' AND pagepath=' . $GLOBALS['TYPO3_DB']->fullQuoteStr(implode('/', $copy_pathParts), 'tx_realurl_pathcache'),
-						'', 'expire', '1');
 
-				// This lookup does not include language and MP var since those are supposed to be fully reflected in the built url!
-				if (is_array($row)) {
+				/** @var $cache t3lib_cache_frontend_AbstractFrontend */
+				$cache = $GLOBALS['typo3CacheManager']->getCache('cache_hash');
+
+					// This lookup does not include language and MP var since those are supposed to be fully reflected in the built url!
+				$cacheEntries = $cache->getByTag(sha1('tx_realurl_pathcache-' . $this->conf['rootpage_id'] . '-' . implode('/', $copy_pathParts)));
+
+				if (count($cacheEntries)) {
+					// there should be one only..
+					list($row) = $cacheEntries;
 					break;
 				}
 
