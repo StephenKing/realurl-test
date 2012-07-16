@@ -536,13 +536,11 @@ class tx_realurl_advanced {
 				$parts = parse_url($pagePath);
 				$this->pObj->devLog('$innerSubDomain=true, showing page path parts', $parts);
 				if ($parts['host'] == '') {
-					foreach ($newRootLine as $rl) {
-						$rows = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows('domainName', 'sys_domain', 'pid=' . $rl['uid'] . ' AND redirectTo=\'\' AND hidden=0', '', 'sorting');
-						if (count($rows)) {
-							$domain = $rows[0]['domainName'];
-							$this->pObj->devLog('Found domain', $domain);
-							$rootPageId = $rl['uid'];
-						}
+					$domainData = $GLOBALS['TSFE']->getDomainDataForPid($newRootLine[0]['uid']);
+					if ($domainData) {
+						$domain = $domainData['domainName'];
+						$this->pObj->devLog('Found domain', $domain);
+						$rootPageId = $newRootLine[0]['uid'];
 					}
 				}
 			}
