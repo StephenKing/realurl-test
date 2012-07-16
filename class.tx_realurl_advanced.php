@@ -356,7 +356,7 @@ class tx_realurl_advanced {
 			try {
 				$cache->set($cacheKey, $pagePathRec);
 			} catch (t3lib_cache_Exception $e) {
-				throw new RuntimeException("Was not able to store pagePathRec " . $cacheKey . "=" . json_encode($pagePathRec))
+				throw new RuntimeException("Was not able to store pagePathRec " . $cacheKey . "=" . json_encode($pagePathRec));
 			}
 		} else {
 		}
