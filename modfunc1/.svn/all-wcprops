@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/TYPO3v4/Extensions/!svn/ver/63822/realurl/trunk/modfunc1
+END
+class.tx_realurl_modfunc1.php
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/TYPO3v4/Extensions/!svn/ver/63822/realurl/trunk/modfunc1/class.tx_realurl_modfunc1.php
+END
+class.tx_realurl_pagebrowser.php
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/TYPO3v4/Extensions/!svn/ver/39319/realurl/trunk/modfunc1/class.tx_realurl_pagebrowser.php
+END
+locallang.xml
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/TYPO3v4/Extensions/!svn/ver/46895/realurl/trunk/modfunc1/locallang.xml
+END
